@@ -3,6 +3,7 @@
 #include <gint/keyboard.h>
 #include <gint/std/stdio.h>
 #include <gint/std/stdlib.h>
+#include <math.h>
 #include <time.h>
 
 int width = 128;
@@ -23,61 +24,61 @@ struct Node {
   struct Node *next;
 };
 
-int main();
-
 typedef struct Node Node;
 
-void createNode(Node *head) {
-  Node *newNode = malloc(sizeof(Node));
-  newNode->next = NULL;
+int main();
+void createNode(Node *head);
+void spawn_food(Node *head, int *food);
+void move_snake(Node *head);
+void check_food(Node *head, int *food);
+int contains(Node *head, int *food);
+void game_over(Node *head);
+void check_collision(Node *head);
+void draw_screen(Node *head, int *food);
+void snap_to_grid(int *food);
 
+void createNode(Node *head) {
   Node *current = head;
   while (current->next != NULL) {
     current = current->next;
   }
+  Node *newNode = malloc(sizeof(Node));
 
-  switch (current->dir) {
-  case UP:
-    newNode->x = current->x;
-    newNode->y = current->y + block_size;
-    break;
-  case DOWN:
-    newNode->x = current->x;
-    newNode->y = current->y - block_size;
-    break;
-  case LEFT:
-    newNode->x = current->x + block_size;
-    newNode->y = current->y;
-    break;
-  case RIGHT:
-    newNode->x = current->x - block_size;
-    newNode->y = current->y;
-    break;
-  }
-
+  newNode->x = current->x;
+  newNode->y = current->y;
   newNode->dir = current->dir;
+  newNode->next = NULL;
   current->next = newNode;
+}
+
+void snap_to_grid(int *food) {
+  food[0] = food[0] - (food[0] % block_size);
+  food[1] = food[1] - (food[1] % block_size);
 }
 
 void spawn_food(Node *head, int *food) {
   Node *current = head;
   srand(time(NULL));
-  int x = rand() % (width / block_size);
-  int y = rand() % (height / block_size);
-  // while (current->next != NULL) {
-  //   if (current->x == x && current->y == y) {
-  //     x = rand() % (width / block_size);
-  //     y = rand() % (height / block_size);
-  //     current = head;
-  //   }
-  //   current = current->next;
-  // }
+  int x = rand() % width;
+  int y = rand() % height;
+  while (current->next != NULL) {
+    if (current->x == x && current->y == y) {
+      x = rand() % width;
+      y = rand() % height;
+      current = head;
+    }
+    current = current->next;
+  }
   food[0] = x;
   food[1] = y;
+  snap_to_grid(food);
 }
 
 void move_snake(Node *head) {
   Node *current = head;
+
+  int tempx = current->x;
+  int tempy = current->y;
 
   switch (current->dir) {
   case UP:
@@ -95,49 +96,83 @@ void move_snake(Node *head) {
   }
 
   while (current->next != NULL) {
-    Node *next = current->next;
-    next->x = current->x;
-    next->y = current->y;
-    next->dir = current->dir;
+    int tempx2 = current->next->x;
+    int tempy2 = current->next->y;
+    current->next->x = tempx;
+    current->next->y = tempy;
+    tempx = tempx2;
+    tempy = tempy2;
+    current = current->next;
   }
 }
 
 void check_food(Node *head, int *food) {
-  Node *current = head;
-  if (current->x == food[0] && current->y == food[1]) {
-    score++;
-    spawn_food(head, food);
+  if (contains(head, food)) {
     createNode(head);
+    spawn_food(head, food);
+    score++;
   }
 }
 
-void game_over() {
+int contains(Node *head, int *food) {
+  int *corner2 = malloc(sizeof(int) * 2);
+  int *corner3 = malloc(sizeof(int) * 2);
+  int *corner4 = malloc(sizeof(int) * 2);
+
+  corner2[0] = food[0] + block_size;
+  corner2[1] = food[1];
+
+  corner3[0] = food[0];
+  corner3[1] = food[1] + block_size;
+
+  corner4[0] = food[0] + block_size;
+  corner4[1] = food[1] + block_size;
+
+  int **corners = malloc(sizeof(int *) * 4);
+
+  corners[0] = food;
+  corners[1] = corner2;
+  corners[2] = corner3;
+  corners[3] = corner4;
+
+  for (int i = 0; i < 4; i++) {
+    if ((corners[i][0] >= head->x && corners[i][1] >= head->y) &&
+        (corners[i][0] <= head->x + block_size &&
+         corners[i][1] <= head->y + block_size)) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void game_over(Node *head) {
   dclear(C_WHITE);
   dtext(0, 0, C_BLACK, "Game Over");
   dupdate();
-  // Node *current = head;
-  // while (current->next != NULL) {
-  //   Node *temp = current;
-  //   current = current->next;
-  //   free(temp);
-  // }
-  // free(food);
-  key_event_t key = getkey();
-  switch (key.key) {
-  case KEY_EXIT:
-    exit(0);
-    break;
-  case KEY_EXE:
-    main();
-    break;
+  Node *current = head;
+  while (current->next != NULL) {
+    Node *temp = current;
+    current = current->next;
+    free(temp);
+  }
+  while (getkey().key != KEY_EXIT || getkey().key != KEY_EXE) {
+    key_event_t key = getkey();
+    switch (key.key) {
+    case KEY_EXIT:
+      exit(0);
+      break;
+    case KEY_EXE:
+      main();
+      break;
+    }
   }
 }
 
 void check_collision(Node *head) {
   Node *current = head;
   while (current->next != NULL) {
-    if (current->x == current->next->x && current->y == current->next->y) {
-      game_over();
+    if (head->x == current->next->x && head->y == current->next->y) {
+      game_over(head);
     }
     current = current->next;
   }
@@ -149,13 +184,11 @@ void draw_screen(Node *head, int *food) {
   drect(current->x, current->y, current->x + block_size,
         current->y + block_size, C_BLACK);
   while (current->next != NULL) {
-    current = current->next;
-    drect(current->x, current->y, current->x + block_size,
-          current->y + block_size, C_BLACK);
+    drect(current->next->x, current->next->y, current->next->x + block_size,
+          current->next->y + block_size, C_BLACK);
     current = current->next;
   }
-  drect(food[0] + 1, food[1] + 1, food[0] + block_size - 1,
-        food[1] + block_size - 1, C_BLACK);
+  drect(food[0], food[1], food[0] + block_size, food[1] + block_size, C_BLACK);
   dupdate();
   char text[10];
   sprintf(text, "Score: %d", score);
@@ -167,37 +200,34 @@ void check_bounds(Node *head) {
   Node *current = head;
   if (current->x < 0 || current->x > width || current->y < 0 ||
       current->y > height) {
-    game_over();
+    game_over(head);
   }
 }
 
 void change_dir(Node *head) {
-  // if (keydown(KEY_UP)) {
-  //   head->dir = UP;
-  // }
-  // if (keydown(KEY_DOWN)) {
-  //   head->dir = DOWN;
-  // }
-  // if (keydown(KEY_LEFT)) {
-  //   head->dir = LEFT;
-  // }
-  // if (keydown(KEY_RIGHT)) {
-  //   head->dir = RIGHT;
-  // }
-  key_event_t key = getkey();
-  switch (key.key) {
-  case KEY_UP:
-    head->dir = UP;
-    break;
-  case KEY_DOWN:
-    head->dir = DOWN;
-    break;
-  case KEY_LEFT:
-    head->dir = LEFT;
-    break;
-  case KEY_RIGHT:
-    head->dir = RIGHT;
-    break;
+  clearevents();
+  if (keydown(KEY_UP)) {
+    if (head->dir != DOWN) {
+      head->dir = UP;
+    }
+  }
+  if (keydown(KEY_DOWN)) {
+    if (head->dir != UP) {
+      head->dir = DOWN;
+    }
+  }
+  if (keydown(KEY_LEFT)) {
+    if (head->dir != RIGHT) {
+      head->dir = LEFT;
+    }
+  }
+  if (keydown(KEY_RIGHT)) {
+    if (head->dir != LEFT) {
+      head->dir = RIGHT;
+    }
+  }
+  if (keydown(KEY_EXIT)) {
+    exit(0);
   }
 }
 
@@ -206,6 +236,11 @@ void delay(int milliseconds, Node *head) {
   while (clock() < start_time + milliseconds * 1000) {
     change_dir(head);
   }
+}
+
+double f(int x) {
+  double y = 200 / (1 + exp(-(x - 170) / 50));
+  return floor(y);
 }
 
 int main(void) {
@@ -224,12 +259,12 @@ int main(void) {
 
   while (1) {
     move_snake(&head);
+    check_collision(&head);
     check_food(&head, food);
-    // check_collision(&head);
     check_bounds(&head);
     draw_screen(&head, food);
     change_dir(&head);
-    // delay(300, &head);
+    delay(300 + f(score), &head);
     dupdate();
   }
 
