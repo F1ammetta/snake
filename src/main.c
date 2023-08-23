@@ -261,6 +261,7 @@ int main(void) {
   dupdate();
 
   Node head;
+  score = 0;
 
   head.x = 20;
   head.y = 20;
