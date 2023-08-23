@@ -11,7 +11,7 @@ int height = 64;
 
 int score = 0;
 
-int block_size = 5;
+int block_size = 4;
 
 enum Direction { UP, DOWN, LEFT, RIGHT };
 
@@ -206,27 +206,27 @@ void check_bounds(Node *head) {
 
 void change_dir(Node *head) {
   clearevents();
-  if (keydown(KEY_UP)) {
+  if (keydown(KEY_UP) || keydown(KEY_8)) {
     if (head->dir != DOWN) {
       head->dir = UP;
     }
   }
-  if (keydown(KEY_DOWN)) {
+  if (keydown(KEY_DOWN) || keydown(KEY_2)) {
     if (head->dir != UP) {
       head->dir = DOWN;
     }
   }
-  if (keydown(KEY_LEFT)) {
+  if (keydown(KEY_LEFT) || keydown(KEY_4)) {
     if (head->dir != RIGHT) {
       head->dir = LEFT;
     }
   }
-  if (keydown(KEY_RIGHT)) {
+  if (keydown(KEY_RIGHT) || keydown(KEY_6)) {
     if (head->dir != LEFT) {
       head->dir = RIGHT;
     }
   }
-  if (keydown(KEY_EXIT)) {
+  if (keydown(KEY_EXIT) || keydown(KEY_MENU)) {
     exit(0);
   }
 }
