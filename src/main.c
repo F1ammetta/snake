@@ -11,7 +11,7 @@ int height = 54;
 
 int score = 0;
 
-int block_size = 4;
+int block_size = 2;
 
 enum Direction { UP, DOWN, LEFT, RIGHT };
 
@@ -252,7 +252,7 @@ void delay(int milliseconds, Node *head) {
 }
 
 double f(int x) {
-  double y = 200 / (1 + exp(-(x - 170) / 50));
+  double y = 200 / (1 + exp(-(x - 50) / 18));
   return floor(y);
 }
 
@@ -278,7 +278,7 @@ int main(void) {
     check_bounds(&head, food);
     draw_screen(&head, food);
     change_dir(&head);
-    delay(300 + f(score), &head);
+    delay(300 - f(score), &head);
     dupdate();
   }
 
