@@ -252,7 +252,7 @@ void delay(int milliseconds, Node *head) {
 }
 
 double f(int x) {
-  double y = 200 / (1 + exp(-(x - 50) / 18));
+  double y = 200 / (1 + exp(-(x - 40) / 15));
   return floor(y);
 }
 
