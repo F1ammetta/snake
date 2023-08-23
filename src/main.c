@@ -32,8 +32,8 @@ void spawn_food(Node *head, int *food);
 void move_snake(Node *head);
 void check_food(Node *head, int *food);
 int contains(Node *head, int *food);
-void game_over(Node *head);
-void check_collision(Node *head);
+void game_over(Node *head, int *food);
+void check_collision(Node *head, int *food);
 void draw_screen(Node *head, int *food);
 void snap_to_grid(int *food);
 
@@ -145,9 +145,12 @@ int contains(Node *head, int *food) {
   return 0;
 }
 
-void game_over(Node *head) {
+void game_over(Node *head, int *food) {
   dclear(C_WHITE);
   dtext(0, 0, C_BLACK, "Game Over");
+  char text[30];
+  sprintf(text, "Score: %d", score);
+  dtext(0, 10, C_BLACK, text);
   dupdate();
   Node *current = head;
   while (current->next != NULL) {
@@ -155,6 +158,7 @@ void game_over(Node *head) {
     current = current->next;
     free(temp);
   }
+  free(food);
   while (getkey().key != KEY_EXIT || getkey().key != KEY_EXE) {
     key_event_t key = getkey();
     switch (key.key) {
@@ -168,11 +172,11 @@ void game_over(Node *head) {
   }
 }
 
-void check_collision(Node *head) {
+void check_collision(Node *head, int *food) {
   Node *current = head;
   while (current->next != NULL) {
     if (head->x == current->next->x && head->y == current->next->y) {
-      game_over(head);
+      game_over(head, food);
     }
     current = current->next;
   }
@@ -205,11 +209,11 @@ void draw_screen(Node *head, int *food) {
   dupdate();
 }
 
-void check_bounds(Node *head) {
+void check_bounds(Node *head, int *food) {
   Node *current = head;
   if (current->x < 0 || current->x + block_size > width || current->y < 0 ||
       current->y + block_size > height) {
-    game_over(head);
+    game_over(head, food);
   }
 }
 
@@ -268,9 +272,9 @@ int main(void) {
 
   while (1) {
     move_snake(&head);
-    check_collision(&head);
+    check_collision(&head, food);
     check_food(&head, food);
-    check_bounds(&head);
+    check_bounds(&head, food);
     draw_screen(&head, food);
     change_dir(&head);
     delay(300 + f(score), &head);
