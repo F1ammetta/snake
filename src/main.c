@@ -6,8 +6,8 @@
 #include <math.h>
 #include <time.h>
 
-int width = 128;
-int height = 64;
+int width = 126;
+int height = 54;
 
 int score = 0;
 
@@ -188,6 +188,15 @@ void draw_screen(Node *head, int *food) {
           current->next->y + block_size, C_BLACK);
     current = current->next;
   }
+  for (int i = 0; i < width; i += block_size) {
+    dpixel(i, 0, C_BLACK);
+    dpixel(i, height, C_BLACK);
+  }
+  for (int i = 0; i < height; i += block_size) {
+    dpixel(0, i, C_BLACK);
+    dpixel(width, i, C_BLACK);
+  }
+
   drect(food[0], food[1], food[0] + block_size, food[1] + block_size, C_BLACK);
   dupdate();
   char text[10];
@@ -198,8 +207,8 @@ void draw_screen(Node *head, int *food) {
 
 void check_bounds(Node *head) {
   Node *current = head;
-  if (current->x < 0 || current->x > width || current->y < 0 ||
-      current->y > height) {
+  if (current->x < 0 || current->x + block_size > width || current->y < 0 ||
+      current->y + block_size > height) {
     game_over(head);
   }
 }
